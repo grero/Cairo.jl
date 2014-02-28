@@ -52,6 +52,8 @@ export
     curve_to, rel_curve_to,
     path_extents,
 
+    push_group,pop_group,
+
     # text
     text,
     update_layout, show_layout, get_layout_size, layout_text,
@@ -112,6 +114,7 @@ function destroy(surface::CairoSurface)
     surface.ptr = C_NULL
     nothing
 end
+
 
 # function resize(surface::CairoSurface, w, h)
 #     if OS_NAME == :Linux
@@ -354,6 +357,23 @@ function copy(ctx::CairoContext)
     c
 end
 
+function push_group(ctx::CairoContext)
+    if ctx.ptr == C_NULL
+        return
+    end
+    ccall((:cairo_push_group, _jl_libcairo), Void, (Ptr{Void},),ctx.ptr)
+    nothing
+end
+
+function pop_group(ctx::CairoContext)
+    if ctx.ptr == C_NULL
+        return
+    end
+    ptr = ccall((:cairo_pop_group, _jl_libcairo), Ptr{Void}, (Ptr{Void},),ctx.ptr)
+    pattern = CairoPattern(ptr)
+    finalizer(pattern, destroy)
+    pattern
+end
 
 for (NAME, FUNCTION) in {(:_destroy, :cairo_destroy),
                          (:save, :cairo_save),
